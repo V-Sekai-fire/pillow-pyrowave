@@ -1,0 +1,76 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The runners have no GPU. Linux and Windows decode on Mesa's lavapipe (llvmpipe), a Vulkan
+          # driver on the CPU whose subgroup size is its vector width / 32 lanes.
+          - { name: linux-lavapipe, os: ubuntu-latest }
+          # 512-bit vectors give 16-lane subgroups: the same build, a different subgroup size.
+          - { name: linux-lavapipe-512, os: ubuntu-latest, lp_width: "512" }
+          - { name: windows-lavapipe, os: windows-latest }
+          # macOS runners' paravirtual GPU is not Apple7 class, so PyroWave's Metal port cannot run
+          # there: build the Metal back end, and test the Vulkan back end through MoltenVK.
+          - { name: macos-metal-build, os: macos-latest, build_only: true }
+          - { name: macos-moltenvk, os: macos-latest, vulkan_on_apple: true }
+    env:
+      LP_NATIVE_VECTOR_WIDTH: ${{ matrix.lp_width }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Vulkan (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers libvulkan1 vulkan-tools
+          vulkaninfo | grep -E "deviceName|subgroupSize|minSubgroupSize|maxSubgroupSize|storageBuffer8BitAccess" | head -8
+
+      - name: Vulkan (Windows)
+        if: runner.os == 'Windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          install_runtime: true
+          install_lavapipe: true
+          cache: true
+          stripdown: true
+
+      - name: Vulkan device (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: vulkaninfo | grep -E "deviceName|subgroupSize|minSubgroupSize|maxSubgroupSize|storageBuffer8BitAccess" | head -8 || true
+
+      - name: Vulkan (macOS, MoltenVK)
+        if: matrix.vulkan_on_apple
+        run: |
+          brew install molten-vk vulkan-loader vulkan-tools
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib" >> "$GITHUB_ENV"
+          DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib vulkaninfo | grep -E "deviceName|subgroupSize|minSubgroupSize|maxSubgroupSize|storageBuffer8BitAccess" | head -8 || true
+
+      - name: Build and install
+        if: ${{ !matrix.vulkan_on_apple }}
+        run: python -m pip install -v ".[test]"
+
+      - name: Build and install (Vulkan back end on Apple)
+        if: matrix.vulkan_on_apple
+        run: python -m pip install -v ".[test]" -C cmake.define.PILLOW_PYROWAVE_VULKAN=ON
+
+      - name: Import
+        run: python -c "import pillow_pyrowave, PIL.Image; print(pillow_pyrowave.FORMAT in PIL.Image.ID)"
+
+      - name: Test
+        if: ${{ !matrix.build_only }}
+        run: python -m pytest -v tests
