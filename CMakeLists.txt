@@ -11,8 +11,8 @@ include(FetchContent)
 FetchContent_Declare(
     pyrowave
     GIT_REPOSITORY https://github.com/V-Sekai-fire/pyrowave.git
-    # V-Sekai-fire/pyrowave dev/dequant-narrow-subgroups: decodes on subgroups narrower than 16 lanes.
-    GIT_TAG 3e2b1fa7471e0ca75a0762acbb3efe1346175e8e
+    # V-Sekai-fire/pyrowave main, with the decode fix for subgroups narrower than 16 lanes (PR 4).
+    GIT_TAG 2a0db384be579e0f92639fc30259a6f8d3dc4eab
     SOURCE_SUBDIR none
 )
 set(N ${CMAKE_CURRENT_SOURCE_DIR}/src/native)
