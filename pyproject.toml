@@ -1,0 +1,38 @@
+[build-system]
+requires = ["scikit-build-core>=0.11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pillow-pyrowave"
+version = "0.1.0"
+description = "Pillow plugin that reads PyroWave intra frames, decoded on the GPU (Metal or Vulkan)."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+authors = [{ name = "K. S. Ernest (iFire) Lee" }]
+dependencies = ["Pillow>=10"]
+keywords = ["pillow", "PIL", "pyrowave", "wavelet", "codec", "image"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Multimedia :: Graphics",
+]
+
+[project.urls]
+Homepage = "https://github.com/V-Sekai-fire/pillow-pyrowave"
+PyroWave = "https://github.com/Themaister/pyrowave"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+wheel.packages = ["src/pillow_pyrowave"]
+cmake.build-type = "Release"
+
+[tool.scikit-build.cmake.define]
+CMAKE_OSX_DEPLOYMENT_TARGET = "13.0"

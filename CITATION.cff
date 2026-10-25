@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: pillow-pyrowave
+type: software
+authors:
+  - given-names: K. S. Ernest
+    family-names: Lee
+    alias: iFire
+license: MIT
+repository-code: "https://github.com/V-Sekai-fire/pillow-pyrowave"
+version: 0.1.0
+references:
+  - type: software
+    title: PyroWave
+    authors:
+      - given-names: Hans-Kristian
+        family-names: Arntzen
+    license: MIT
+    repository-code: "https://github.com/Themaister/pyrowave"
+  - type: software
+    title: Granite
+    authors:
+      - given-names: Hans-Kristian
+        family-names: Arntzen
+    license: MIT
+    repository-code: "https://github.com/Themaister/Granite"
+  - type: software
+    title: Pillow
+    authors:
+      - name: "Jeffrey A. Clark and contributors"
+    license: MIT-CMU
+    repository-code: "https://github.com/python-pillow/Pillow"
