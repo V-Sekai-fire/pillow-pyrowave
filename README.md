@@ -1,9 +1,12 @@
 # pillow-pyrowave
 
-A [Pillow](https://python-pillow.org/) plugin that reads [PyroWave](https://github.com/Themaister/pyrowave)
-intra frames. After `import pillow_pyrowave`, `PIL.Image.open` opens a PyroWave frame as an RGB image.
-Decoding runs on the GPU: PyroWave's Metal port on Apple silicon, its Vulkan library on Linux and
-Windows.
+**Open a PyroWave frame with `Image.open`.**
+
+[PyroWave](https://github.com/Themaister/pyrowave) frames are GPU wavelet packets, and Pillow cannot
+read them. Without a decoder, every frame in a trace store stays a blob of bytes.
+
+This [Pillow](https://python-pillow.org/) plugin decodes each frame on the GPU (PyroWave's Metal port on
+Apple silicon, its Vulkan library on Linux and Windows) and gives back an RGB image.
 
 ```bash
 pip install git+https://github.com/V-Sekai-fire/pillow-pyrowave
@@ -18,22 +21,28 @@ im = Image.open(io.BytesIO(frame_bytes))   # im.format == "PYROWAVE", im.mode ==
 im.save("frame.png")
 ```
 
-`pillow_pyrowave.frame_size(data)` reads the width and height from a frame's header without decoding.
+Try it on a window view from a `cua-tracer` or XR Pilot trace store. To get the size without decoding,
+call `pillow_pyrowave.frame_size(data)`.
 
 ## What it reads
 
-One PyroWave frame: the 8-byte start-of-frame sequence header, then the frame's blocks. This is what
-PyroWave's encoder emits for one image, and what the `cua-tracer` and XR Pilot trace stores keep for
-each window view. A file is taken as PyroWave only when its whole structure checks out: every block
-header belongs to the frame, every block index lies inside the frame's block grid, and the blocks end
-exactly at the end of the data, as many as the header counts.
+**One frame, checked end to end.** A file is taken as PyroWave only when its whole structure checks
+out, so other images are never mistaken for it.
 
-Output is 8-bit sRGB RGB. Frames with BT.709 primaries, transfer and YCbCr transform, full or limited
-range, 4:2:0 or 4:4:4 chroma, are converted. Frames with BT.2020 primaries or transform, or the PQ
-transfer, are refused with a `ValueError` rather than converted to the wrong colours. Full-range chroma
-is read as `byte / 255 - 0.5`, the inverse of the `cua-tracer-pyrowave` and XR Pilot encoders.
+A frame is what PyroWave's encoder emits for one image: the 8-byte start-of-frame sequence header,
+then the frame's blocks. Every block header must belong to the frame, every block index must lie
+inside the frame's block grid, and the blocks must end exactly at the end of the data, as many as the
+header counts.
 
-Reading only. There is no `save` support.
+Output is 8-bit sRGB RGB:
+
+| Frame | Result |
+|---|---|
+| BT.709 primaries, transfer and YCbCr transform; full or limited range; 4:2:0 or 4:4:4 chroma | converted |
+| BT.2020 primaries or transform, or the PQ transfer | refused with a `ValueError`, not converted to the wrong colours |
+
+Full-range chroma is read as `byte / 255 - 0.5`, the inverse of the `cua-tracer-pyrowave` and XR Pilot
+encoders. The plugin reads only: there is no `save` support.
 
 ## Requirements
 
@@ -49,7 +58,7 @@ pip install ".[test]" && pytest
 ```
 
 The fixtures in `tests/data` are generated images and the frames that `cua-tracer-pyrowave`, an
-independent encoder, made from them (`tools/make_fixtures.py`).
+independent encoder, made from them (`tools/make_fixtures.py`). Run that script to make them again.
 
 ## Licence
 
