@@ -1,0 +1,50 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # The runners have no GPU. Linux and Windows decode on Mesa's lavapipe, a Vulkan driver that
+      # runs on the CPU; macOS runners expose a paravirtual Metal device.
+      - name: Vulkan (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers libvulkan1 vulkan-tools
+          vulkaninfo --summary
+
+      - name: Vulkan (Windows)
+        if: runner.os == 'Windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          install_runtime: true
+          install_lavapipe: true
+          cache: true
+          stripdown: true
+
+      - name: Vulkan device (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: vulkaninfo --summary || true
+
+      - name: Build and install
+        run: python -m pip install -v ".[test]"
+
+      - name: Test
+        run: python -m pytest -v tests
