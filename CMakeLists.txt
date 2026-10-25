@@ -15,7 +15,9 @@ FetchContent_Declare(
     SOURCE_SUBDIR none
 )
 set(N ${CMAKE_CURRENT_SOURCE_DIR}/src/native)
-if(APPLE)
+# PILLOW_PYROWAVE_VULKAN builds the Vulkan back end on Apple too (MoltenVK), to test that path on a Mac.
+option(PILLOW_PYROWAVE_VULKAN "Build the Vulkan back end on Apple (MoltenVK) instead of Metal" OFF)
+if(APPLE AND NOT PILLOW_PYROWAVE_VULKAN)
     enable_language(OBJCXX)
     FetchContent_MakeAvailable(pyrowave)
     set(M ${pyrowave_SOURCE_DIR}/metal)
@@ -33,8 +35,9 @@ if(APPLE)
 else()
     FetchContent_Declare(
         granite
-        GIT_REPOSITORY https://github.com/Themaister/Granite.git
-        GIT_TAG 1b2d1801d2910fb09ebcded2f0bb3a3a781103b5
+        # Themaister/Granite 1b2d1801 plus one commit that lets util/timer.cpp build on macOS.
+        GIT_REPOSITORY https://github.com/V-Sekai-fire/Granite.git
+        GIT_TAG 0e9b26e2d0e6cc9b5ab1184782b0635571080c8e
         GIT_SUBMODULES third_party/volk third_party/khronos/vulkan-headers
         SOURCE_SUBDIR none
     )

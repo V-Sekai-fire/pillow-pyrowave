@@ -49,7 +49,11 @@ encoders. The plugin reads only: there is no `save` support.
 - macOS on Apple silicon (Apple7 GPU family or newer), or Linux or Windows with a Vulkan driver whose
   device has 8-bit storage and clustered subgroup operations.
 - A C++17 compiler and CMake 3.20 or newer to build from source. The build fetches PyroWave
-  (V-Sekai-fire/pyrowave, pinned) and, off Apple, a pinned Granite subset; no Vulkan SDK is needed.
+  (V-Sekai-fire/pyrowave, pinned) and, for the Vulkan back end, a pinned Granite subset
+  (V-Sekai-fire/Granite); no Vulkan SDK is needed.
+- To test the Vulkan back end on a Mac, build with
+  `pip install . -C cmake.define.PILLOW_PYROWAVE_VULKAN=ON` and run with MoltenVK
+  (`brew install molten-vk vulkan-loader`, `DYLD_FALLBACK_LIBRARY_PATH=$(brew --prefix)/lib`).
 
 ## Tests
 
